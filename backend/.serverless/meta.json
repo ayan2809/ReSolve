@@ -1,0 +1,831 @@
+{
+  "/Volumes/Projects/ReSolve/backend/serverless.yml": {
+    "versionFramework": "4.30.0",
+    "servicePath": "/Volumes/Projects/ReSolve/backend/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "resolve-backend",
+      "provider": {
+        "name": "aws",
+        "runtime": "python3.12",
+        "region": "ap-southeast-2",
+        "memorySize": 512,
+        "timeout": 30,
+        "environment": {
+          "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
+          "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+          "NOTIFICATION_TIME": "09:00"
+        },
+        "stage": "dev",
+        "versionFunctions": true
+      },
+      "plugins": [
+        "serverless-lift"
+      ],
+      "constructs": {
+        "frontend": {
+          "type": "single-page-app",
+          "path": "../frontend/dist",
+          "framework": "vite"
+        }
+      },
+      "package": {
+        "individually": false,
+        "patterns": [
+          "!node_modules/**",
+          "!frontend/**",
+          "!.git/**",
+          "!.venv/**",
+          "!venv/**",
+          "!tests/**",
+          "!.pytest_cache/**",
+          "!alembic/**",
+          "python_packages/**"
+        ],
+        "artifactsS3KeyDirname": "serverless/resolve-backend/dev/code-artifacts"
+      },
+      "functions": {
+        "api": {
+          "handler": "main.handler",
+          "url": true,
+          "events": [
+            {
+              "http": {
+                "path": "/{proxy+}",
+                "method": "any",
+                "cors": true
+              }
+            }
+          ],
+          "name": "resolve-backend-dev-api"
+        },
+        "cron": {
+          "handler": "services.scheduler_logic.run_daily_reviews",
+          "events": [
+            {
+              "schedule": "cron(0 0 * * ? *)"
+            }
+          ],
+          "name": "resolve-backend-dev-cron"
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "python3.12",
+      "region": "ap-southeast-2",
+      "memorySize": 512,
+      "timeout": 30,
+      "environment": {
+        "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+        "NOTIFICATION_TIME": "09:00"
+      },
+      "stage": "dev",
+      "versionFunctions": true
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "serviceRawFile": "service: resolve-backend\n\nprovider:\n  name: aws\n  runtime: python3.12\n  region: ap-southeast-2\n  memorySize: 512\n  timeout: 30\n  environment:\n    DATABASE_URL: ${env:DATABASE_URL}\n    SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}\n    NOTIFICATION_TIME: \"09:00\"\n\nplugins:\n  - serverless-lift\n\nconstructs:\n  frontend:\n    type: single-page-app\n    path: ../frontend/dist\n    framework: vite\n\npackage:\n  individually: false\n  patterns:\n    - \"!node_modules/**\"\n    - \"!frontend/**\"\n    - \"!.git/**\"\n    - \"!.venv/**\"\n    - \"!venv/**\"\n    - \"!tests/**\"\n    - \"!.pytest_cache/**\"\n    - \"!alembic/**\"\n    - \"python_packages/**\"\n\nfunctions:\n  api:\n    handler: main.handler\n    url: true\n    events:\n      - http:\n          path: /{proxy+}\n          method: any\n          cors: true\n\n  cron:\n    handler: services.scheduler_logic.run_daily_reviews\n    events:\n      - schedule: cron(0 0 * * ? *)\n",
+    "command": [
+      "deploy"
+    ],
+    "options": {
+      "force": true
+    },
+    "orgId": "d1846fc1-80cc-4bea-9846-f73320505ce4",
+    "orgName": "ayan2809",
+    "userId": "jxwQdVM5CBK3LVkw31",
+    "userName": "ayan2809",
+    "serviceProviderAwsAccountId": "355426657170",
+    "serviceProviderAwsCfStackName": "resolve-backend-dev",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-southeast-2:355426657170:stack/resolve-backend-dev/a10f0240-ecb0-11f0-848b-0a18435d4f9b",
+    "serviceProviderAwsCfStackCreated": "2026-01-08T16:39:41.612Z",
+    "serviceProviderAwsCfStackUpdated": "2026-01-10T03:24:17.808Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "frontendCloudFrontCName2D5AB42B",
+        "OutputValue": "d3vephc4zfhy4e.cloudfront.net",
+        "Description": "CloudFront CNAME."
+      },
+      {
+        "OutputKey": "ApiLambdaFunctionUrl",
+        "OutputValue": "https://q7muc2ewmpblmgy767v7vgs3vu0rejim.lambda-url.ap-southeast-2.on.aws/",
+        "Description": "Lambda Function URL",
+        "ExportName": "sls-resolve-backend-dev-ApiLambdaFunctionUrl"
+      },
+      {
+        "OutputKey": "frontendDomain7AAE62D7",
+        "OutputValue": "d3vephc4zfhy4e.cloudfront.net",
+        "Description": "Website domain name."
+      },
+      {
+        "OutputKey": "ApiLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-api:25",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "frontendBucketNameA6015515",
+        "OutputValue": "resolve-backend-dev-frontendbucket4361f956-tl5g29ltmvuf",
+        "Description": "Name of the bucket that stores the static website."
+      },
+      {
+        "OutputKey": "CronLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-cron:23",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "frontendDistributionId9FCC0DF4",
+        "OutputValue": "E9ZE3I4RFF0XG",
+        "Description": "ID of the CloudFront distribution."
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://pidxq1w5o2.execute-api.ap-southeast-2.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-resolve-backend-dev-ServiceEndpoint"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
+        "ExportName": "sls-resolve-backend-dev-ServerlessDeploymentBucketName"
+      }
+    ],
+    "compiledCloudFormationTemplate": {
+      "AWSTemplateFormatVersion": "2010-09-09",
+      "Description": "The AWS CloudFormation template for this Serverless application",
+      "Resources": {
+        "ApiLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/resolve-backend-dev-api"
+          }
+        },
+        "CronLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/resolve-backend-dev-cron"
+          }
+        },
+        "IamRoleLambdaExecution": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": [
+                      "lambda.amazonaws.com"
+                    ]
+                  },
+                  "Action": [
+                    "sts:AssumeRole"
+                  ]
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "resolve-backend",
+                      "dev",
+                      "lambda"
+                    ]
+                  ]
+                },
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/resolve-backend-dev*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/resolve-backend-dev*:*:*"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "/",
+            "RoleName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "resolve-backend",
+                  "dev",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "lambdaRole"
+                ]
+              ]
+            }
+          }
+        },
+        "ApiLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
+              "S3Key": "serverless/resolve-backend/dev/1768015767295-2026-01-10T03:29:27.295Z/resolve-backend.zip"
+            },
+            "Handler": "main.handler",
+            "Runtime": "python3.12",
+            "FunctionName": "resolve-backend-dev-api",
+            "MemorySize": 512,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                "NOTIFICATION_TIME": "09:00"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "ApiLogGroup"
+          ]
+        },
+        "CronLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
+              "S3Key": "serverless/resolve-backend/dev/1768015767295-2026-01-10T03:29:27.295Z/resolve-backend.zip"
+            },
+            "Handler": "services.scheduler_logic.run_daily_reviews",
+            "Runtime": "python3.12",
+            "FunctionName": "resolve-backend-dev-cron",
+            "MemorySize": 512,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                "NOTIFICATION_TIME": "09:00"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "CronLogGroup"
+          ]
+        },
+        "ApiLambdaVersionlA0MgsCJtz4kVd38qrIlSeFYxKFS9batvIQiDAths": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "ApiLambdaFunction"
+            },
+            "CodeSha256": "4QHlkjurFJS1an4pHrI1UsIowtP1YvvgWR/t7yIoMQU="
+          }
+        },
+        "ApiLambdaFunctionUrl": {
+          "Type": "AWS::Lambda::Url",
+          "Properties": {
+            "AuthType": "NONE",
+            "TargetFunctionArn": {
+              "Fn::GetAtt": [
+                "ApiLambdaFunction",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "ApiLambdaPermissionFnUrl": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ApiLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunctionUrl",
+            "Principal": "*",
+            "FunctionUrlAuthType": "NONE"
+          }
+        },
+        "ApiLambdaPermissionFnUrlInvokeFunction": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ApiLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "*",
+            "InvokedViaFunctionUrl": true
+          }
+        },
+        "CronLambdaVersionDvEzgoIYeAgXnKJkElnyzoXLKAXGaD8FYxwd29HBcag": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "CronLambdaFunction"
+            },
+            "CodeSha256": "4QHlkjurFJS1an4pHrI1UsIowtP1YvvgWR/t7yIoMQU="
+          }
+        },
+        "CronEventsRuleSchedule1": {
+          "Type": "AWS::Events::Rule",
+          "Properties": {
+            "ScheduleExpression": "cron(0 0 * * ? *)",
+            "State": "ENABLED",
+            "Targets": [
+              {
+                "Arn": {
+                  "Fn::GetAtt": [
+                    "CronLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Id": "cronSchedule"
+              }
+            ]
+          }
+        },
+        "CronLambdaPermissionEventsRuleSchedule1": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "CronLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "events.amazonaws.com",
+            "SourceArn": {
+              "Fn::GetAtt": [
+                "CronEventsRuleSchedule1",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "ApiGatewayRestApi": {
+          "Type": "AWS::ApiGateway::RestApi",
+          "Properties": {
+            "Name": "dev-resolve-backend",
+            "EndpointConfiguration": {
+              "Types": [
+                "EDGE"
+              ]
+            },
+            "Policy": ""
+          }
+        },
+        "ApiGatewayResourceProxyVar": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "{proxy+}",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodProxyVarOptions": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "AuthorizationType": "NONE",
+            "HttpMethod": "OPTIONS",
+            "MethodResponses": [
+              {
+                "StatusCode": "200",
+                "ResponseParameters": {
+                  "method.response.header.Access-Control-Allow-Origin": true,
+                  "method.response.header.Access-Control-Allow-Headers": true,
+                  "method.response.header.Access-Control-Allow-Methods": true
+                },
+                "ResponseModels": {}
+              }
+            ],
+            "RequestParameters": {},
+            "Integration": {
+              "Type": "MOCK",
+              "RequestTemplates": {
+                "application/json": "{statusCode:200}"
+              },
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "IntegrationResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                    "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,DELETE,GET,HEAD,PATCH,POST,PUT'"
+                  },
+                  "ResponseTemplates": {
+                    "application/json": ""
+                  }
+                }
+              ]
+            },
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceProxyVar"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodProxyVarAny": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "ANY",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceProxyVar"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "ApiLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "ApiLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayDeployment1768015755460": {
+          "Type": "AWS::ApiGateway::Deployment",
+          "Properties": {
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "StageName": "dev"
+          },
+          "DependsOn": [
+            "ApiGatewayMethodProxyVarOptions",
+            "ApiGatewayMethodProxyVarAny"
+          ]
+        },
+        "ApiLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ApiLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "frontendBucket4361F956": {
+          "Type": "AWS::S3::Bucket",
+          "UpdateReplacePolicy": "Delete",
+          "DeletionPolicy": "Delete"
+        },
+        "frontendBucketPolicy922ED3F6": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "Bucket": {
+              "Ref": "frontendBucket4361F956"
+            },
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "s3:GetObject",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "CanonicalUser": {
+                      "Fn::GetAtt": [
+                        "frontendCDNOrigin1S3Origin210E2C57",
+                        "S3CanonicalUserId"
+                      ]
+                    }
+                  },
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        {
+                          "Fn::GetAtt": [
+                            "frontendBucket4361F956",
+                            "Arn"
+                          ]
+                        },
+                        "/*"
+                      ]
+                    ]
+                  }
+                }
+              ],
+              "Version": "2012-10-17"
+            }
+          }
+        },
+        "frontendResponseFunction7E7981B0": {
+          "Type": "AWS::CloudFront::Function",
+          "Properties": {
+            "AutoPublish": true,
+            "FunctionCode": "function handler(event) {\n    var response = event.response;\n    response.headers = Object.assign({}, {\n    \"x-frame-options\": {\n        \"value\": \"SAMEORIGIN\"\n    },\n    \"x-content-type-options\": {\n        \"value\": \"nosniff\"\n    },\n    \"x-xss-protection\": {\n        \"value\": \"1; mode=block\"\n    },\n    \"strict-transport-security\": {\n        \"value\": \"max-age=63072000\"\n    }\n}, response.headers);\n    return response;\n}",
+            "FunctionConfig": {
+              "Comment": "resolve-backend-dev-ap-southeast-2-frontend-response",
+              "Runtime": "cloudfront-js-1.0"
+            },
+            "Name": "resolve-backend-dev-ap-southeast-2-frontend-response"
+          }
+        },
+        "frontendCDNOrigin1S3Origin210E2C57": {
+          "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+          "Properties": {
+            "CloudFrontOriginAccessIdentityConfig": {
+              "Comment": "Identity for frontendCDNOrigin120FA1FCF"
+            }
+          }
+        },
+        "frontendCDN14946B07": {
+          "Type": "AWS::CloudFront::Distribution",
+          "Properties": {
+            "DistributionConfig": {
+              "Comment": "resolve-backend-dev frontend website CDN",
+              "CustomErrorResponses": [
+                {
+                  "ErrorCachingMinTTL": 0,
+                  "ErrorCode": 404,
+                  "ResponseCode": 200,
+                  "ResponsePagePath": "/index.html"
+                }
+              ],
+              "DefaultCacheBehavior": {
+                "AllowedMethods": [
+                  "GET",
+                  "HEAD",
+                  "OPTIONS"
+                ],
+                "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+                "Compress": true,
+                "FunctionAssociations": [
+                  {
+                    "EventType": "viewer-response",
+                    "FunctionARN": {
+                      "Fn::GetAtt": [
+                        "frontendResponseFunction7E7981B0",
+                        "FunctionARN"
+                      ]
+                    }
+                  },
+                  {
+                    "EventType": "viewer-request",
+                    "FunctionARN": {
+                      "Fn::GetAtt": [
+                        "frontendRequestFunctionC6819C0C",
+                        "FunctionARN"
+                      ]
+                    }
+                  }
+                ],
+                "TargetOriginId": "frontendCDNOrigin120FA1FCF",
+                "ViewerProtocolPolicy": "redirect-to-https"
+              },
+              "DefaultRootObject": "index.html",
+              "Enabled": true,
+              "HttpVersion": "http2",
+              "IPV6Enabled": true,
+              "Origins": [
+                {
+                  "DomainName": {
+                    "Fn::GetAtt": [
+                      "frontendBucket4361F956",
+                      "RegionalDomainName"
+                    ]
+                  },
+                  "Id": "frontendCDNOrigin120FA1FCF",
+                  "S3OriginConfig": {
+                    "OriginAccessIdentity": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "origin-access-identity/cloudfront/",
+                          {
+                            "Ref": "frontendCDNOrigin1S3Origin210E2C57"
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "frontendRequestFunctionC6819C0C": {
+          "Type": "AWS::CloudFront::Function",
+          "Properties": {
+            "AutoPublish": true,
+            "FunctionCode": "var REDIRECT_REGEX = /^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|xml|pdf|webmanifest|avif|wasm)$)([^.]+$)/;\n\nfunction handler(event) {\n    var uri = event.request.uri;\n    var request = event.request;\n    var isUriToRedirect = REDIRECT_REGEX.test(uri);\n\n    if (isUriToRedirect) {\n        request.uri = \"/index.html\";\n    }\n\n    return event.request;\n}",
+            "FunctionConfig": {
+              "Comment": "resolve-backend-dev-ap-southeast-2-frontend-request",
+              "Runtime": "cloudfront-js-1.0"
+            },
+            "Name": "resolve-backend-dev-ap-southeast-2-frontend-request"
+          }
+        }
+      },
+      "Outputs": {
+        "ServerlessDeploymentBucketName": {
+          "Value": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
+          "Export": {
+            "Name": "sls-resolve-backend-dev-ServerlessDeploymentBucketName"
+          }
+        },
+        "ApiLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "ApiLambdaVersionlA0MgsCJtz4kVd38qrIlSeFYxKFS9batvIQiDAths"
+          },
+          "Export": {
+            "Name": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
+          }
+        },
+        "ApiLambdaFunctionUrl": {
+          "Description": "Lambda Function URL",
+          "Value": {
+            "Fn::GetAtt": [
+              "ApiLambdaFunctionUrl",
+              "FunctionUrl"
+            ]
+          },
+          "Export": {
+            "Name": "sls-resolve-backend-dev-ApiLambdaFunctionUrl"
+          }
+        },
+        "CronLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "CronLambdaVersionDvEzgoIYeAgXnKJkElnyzoXLKAXGaD8FYxwd29HBcag"
+          },
+          "Export": {
+            "Name": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
+          }
+        },
+        "ServiceEndpoint": {
+          "Description": "URL of the service endpoint",
+          "Value": {
+            "Fn::Join": [
+              "",
+              [
+                "https://",
+                {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                ".execute-api.",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ".",
+                {
+                  "Ref": "AWS::URLSuffix"
+                },
+                "/dev"
+              ]
+            ]
+          },
+          "Export": {
+            "Name": "sls-resolve-backend-dev-ServiceEndpoint"
+          }
+        },
+        "frontendBucketNameA6015515": {
+          "Description": "Name of the bucket that stores the static website.",
+          "Value": {
+            "Ref": "frontendBucket4361F956"
+          }
+        },
+        "frontendDomain7AAE62D7": {
+          "Description": "Website domain name.",
+          "Value": {
+            "Fn::GetAtt": [
+              "frontendCDN14946B07",
+              "DomainName"
+            ]
+          }
+        },
+        "frontendCloudFrontCName2D5AB42B": {
+          "Description": "CloudFront CNAME.",
+          "Value": {
+            "Fn::GetAtt": [
+              "frontendCDN14946B07",
+              "DomainName"
+            ]
+          }
+        },
+        "frontendDistributionId9FCC0DF4": {
+          "Description": "ID of the CloudFront distribution.",
+          "Value": {
+            "Ref": "frontendCDN14946B07"
+          }
+        }
+      }
+    }
+  }
+}

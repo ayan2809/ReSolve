@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "serverless": "^4.29.4"
+  },
+  "devDependencies": {
+    "serverless-lift": "^1.32.1",
+    "serverless-python-requirements": "^6.1.2"
+  }
+}

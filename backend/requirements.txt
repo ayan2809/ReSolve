@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlmodel
+alembic
+psycopg2-binary
+apscheduler
+requests
+python-dotenv
+pydantic-settings
+mangum
+python-jose[cryptography]
