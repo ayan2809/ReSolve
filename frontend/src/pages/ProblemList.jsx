@@ -1,15 +1,56 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/client';
-import { Plus, Link as LinkIcon, ExternalLink, Check, Search, Loader2, FolderOpen, X, Download } from 'lucide-react';
+import {
+    Plus, Link as LinkIcon, ExternalLink, Check, Search, Loader2,
+    FolderOpen, X, Download, Filter, SortAsc, ChevronDown,
+    Calendar, AlertTriangle, CheckCircle2, Clock
+} from 'lucide-react';
+
+const STATUS_OPTIONS = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active', icon: Clock, color: 'text-blue-400' },
+    { value: 'failed', label: 'Failed', icon: AlertTriangle, color: 'text-rose-400' },
+    { value: 'completed', label: 'Completed', icon: CheckCircle2, color: 'text-emerald-400' },
+    { value: 'new', label: 'New', icon: Plus, color: 'text-purple-400' },
+];
+
+const DUE_OPTIONS = [
+    { value: '', label: 'Any Due Date' },
+    { value: 'today', label: 'Due Today' },
+    { value: 'week', label: 'Due This Week' },
+    { value: 'overdue', label: 'Overdue' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'created_desc', label: 'Newest First' },
+    { value: 'created_asc', label: 'Oldest First' },
+    { value: 'next_review', label: 'Next Review' },
+    { value: 'failure_count', label: 'Most Failed' },
+];
 
 export default function ProblemList() {
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [problems, setProblems] = useState([]);
+    const [filterOptions, setFilterOptions] = useState({ platforms: [], difficulties: [], tags: [] });
     const [showAddForm, setShowAddForm] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [fetchingTags, setFetchingTags] = useState(false);
     const [fetchError, setFetchError] = useState(null);
+    const [showFilters, setShowFilters] = useState(false);
+
+    // Get filter values from URL params
+    const filters = {
+        status: searchParams.get('status') || '',
+        due: searchParams.get('due') || '',
+        platform: searchParams.get('platform') || '',
+        difficulty: searchParams.get('difficulty') || '',
+        tags: searchParams.get('tags') || '',
+        q: searchParams.get('q') || '',
+        sort: searchParams.get('sort') || 'created_desc',
+    };
 
     const [formData, setFormData] = useState({
         title: '',
@@ -21,11 +62,22 @@ export default function ProblemList() {
 
     useEffect(() => {
         fetchProblems();
-    }, []);
+        fetchFilterOptions();
+    }, [searchParams]);
 
     const fetchProblems = async () => {
+        setLoading(true);
         try {
-            const res = await api.get('/problems');
+            const params = new URLSearchParams();
+            if (filters.status) params.set('status', filters.status);
+            if (filters.due) params.set('due', filters.due);
+            if (filters.platform) params.set('platform', filters.platform);
+            if (filters.difficulty) params.set('difficulty', filters.difficulty);
+            if (filters.tags) params.set('tags', filters.tags);
+            if (filters.q) params.set('q', filters.q);
+            params.set('sort', filters.sort);
+
+            const res = await api.get(`/problems?${params.toString()}`);
             setProblems(res.data);
         } catch (err) {
             console.error(err);
@@ -33,6 +85,31 @@ export default function ProblemList() {
             setLoading(false);
         }
     };
+
+    const fetchFilterOptions = async () => {
+        try {
+            const res = await api.get('/problems/filters');
+            setFilterOptions(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const updateFilter = (key, value) => {
+        const newParams = new URLSearchParams(searchParams);
+        if (value) {
+            newParams.set(key, value);
+        } else {
+            newParams.delete(key);
+        }
+        setSearchParams(newParams);
+    };
+
+    const clearFilters = () => {
+        setSearchParams(new URLSearchParams());
+    };
+
+    const hasActiveFilters = filters.status || filters.due || filters.platform || filters.difficulty || filters.tags;
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -80,18 +157,22 @@ export default function ProblemList() {
         }
     };
 
-    const filteredProblems = problems.filter(p =>
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-
     const getDifficultyBadge = (difficulty) => {
         switch (difficulty) {
             case 'Easy': return 'badge-easy';
             case 'Medium': return 'badge-medium';
             case 'Hard': return 'badge-hard';
             default: return 'badge-medium';
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'active': return { bg: 'bg-blue-500/15', text: 'text-blue-400', label: 'Active' };
+            case 'failed': return { bg: 'bg-rose-500/15', text: 'text-rose-400', label: 'Failed' };
+            case 'completed': return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', label: 'Done' };
+            case 'new': return { bg: 'bg-purple-500/15', text: 'text-purple-400', label: 'New' };
+            default: return { bg: 'bg-white/10', text: 'text-muted-foreground', label: status };
         }
     };
 
@@ -102,7 +183,8 @@ export default function ProblemList() {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold gradient-text">Problem Bank</h1>
                     <p className="text-muted-foreground text-sm mt-1">
-                        {problems.length} problem{problems.length !== 1 ? 's' : ''} tracked
+                        {problems.length} problem{problems.length !== 1 ? 's' : ''}
+                        {hasActiveFilters && ' (filtered)'}
                     </p>
                 </div>
                 <button
@@ -224,19 +306,102 @@ export default function ProblemList() {
                 </div>
             )}
 
-            {/* Search */}
-            {problems.length > 0 && (
-                <div className="relative">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Search problems or tags..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="input-modern pl-14"
-                    />
+            {/* Filter Bar */}
+            <div className="glass rounded-xl p-3 md:p-4 space-y-3">
+                {/* Top Row: Search, Filter Toggle, Sort */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Search */}
+                    <div className="relative flex-1">
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Search problems..."
+                            value={filters.q}
+                            onChange={e => updateFilter('q', e.target.value)}
+                            className="input-modern pl-12 w-full"
+                        />
+                    </div>
+
+                    {/* Filter Toggle & Sort */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`btn-secondary flex items-center gap-2 ${hasActiveFilters ? 'ring-2 ring-primary' : ''}`}
+                        >
+                            <Filter size={16} />
+                            Filters
+                            {hasActiveFilters && <span className="w-2 h-2 bg-primary rounded-full" />}
+                        </button>
+
+                        <select
+                            value={filters.sort}
+                            onChange={e => updateFilter('sort', e.target.value)}
+                            className="input-modern pr-8"
+                        >
+                            {SORT_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-            )}
+
+                {/* Filter Dropdowns */}
+                {showFilters && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <select
+                            value={filters.status}
+                            onChange={e => updateFilter('status', e.target.value)}
+                            className="input-modern text-sm"
+                        >
+                            {STATUS_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filters.due}
+                            onChange={e => updateFilter('due', e.target.value)}
+                            className="input-modern text-sm"
+                        >
+                            {DUE_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filters.platform}
+                            onChange={e => updateFilter('platform', e.target.value)}
+                            className="input-modern text-sm"
+                        >
+                            <option value="">All Platforms</option>
+                            {filterOptions.platforms.map(p => (
+                                <option key={p} value={p.toLowerCase()}>{p}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filters.difficulty}
+                            onChange={e => updateFilter('difficulty', e.target.value)}
+                            className="input-modern text-sm"
+                        >
+                            <option value="">All Difficulties</option>
+                            {filterOptions.difficulties.map(d => (
+                                <option key={d} value={d.toLowerCase()}>{d}</option>
+                            ))}
+                        </select>
+
+                        {hasActiveFilters && (
+                            <button
+                                onClick={clearFilters}
+                                className="col-span-2 md:col-span-4 text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1"
+                            >
+                                <X size={14} />
+                                Clear all filters
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Problem List */}
             {loading ? (
@@ -246,80 +411,107 @@ export default function ProblemList() {
             ) : problems.length === 0 ? (
                 <div className="glass rounded-xl md:rounded-2xl p-8 md:p-12 text-center">
                     <FolderOpen size={40} className="mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg md:text-xl font-semibold mb-2">No Problems Yet</h3>
+                    <h3 className="text-lg md:text-xl font-semibold mb-2">
+                        {hasActiveFilters ? 'No Problems Match Filters' : 'No Problems Yet'}
+                    </h3>
                     <p className="text-muted-foreground text-sm md:text-base mb-6">
-                        Start tracking problems to build your review schedule.
+                        {hasActiveFilters
+                            ? 'Try adjusting your filters or search term.'
+                            : 'Start tracking problems to build your review schedule.'}
                     </p>
-                    <button
-                        onClick={() => setShowAddForm(true)}
-                        className="btn-primary inline-flex items-center gap-2"
-                    >
-                        <Plus size={18} />
-                        Add First Problem
-                    </button>
+                    {hasActiveFilters ? (
+                        <button
+                            onClick={clearFilters}
+                            className="btn-secondary inline-flex items-center gap-2"
+                        >
+                            <X size={18} />
+                            Clear Filters
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setShowAddForm(true)}
+                            className="btn-primary inline-flex items-center gap-2"
+                        >
+                            <Plus size={18} />
+                            Add First Problem
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-2 md:space-y-3">
-                    {filteredProblems.map((problem) => (
-                        <div
-                            key={problem.id}
-                            className="glass rounded-xl p-4 md:p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 group hover:bg-white/10 transition-all duration-200"
-                        >
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <h3 className="font-semibold text-base md:text-lg truncate">{problem.title}</h3>
-                                    <span className={`badge text-xs ${getDifficultyBadge(problem.difficulty)}`}>
-                                        {problem.difficulty}
-                                    </span>
-                                </div>
-                                <div className="text-xs md:text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                                    <span className="bg-white/5 px-2 py-0.5 rounded">{problem.platform}</span>
+                    {problems.map((problem) => {
+                        const statusBadge = getStatusBadge(problem.status);
+                        return (
+                            <div
+                                key={problem.id}
+                                className="glass rounded-xl p-4 md:p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 group hover:bg-white/10 transition-all duration-200"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="font-semibold text-base md:text-lg truncate">{problem.title}</h3>
+                                        <span className={`badge text-xs ${getDifficultyBadge(problem.difficulty)}`}>
+                                            {problem.difficulty}
+                                        </span>
+                                        <span className={`text-xs px-2 py-0.5 rounded ${statusBadge.bg} ${statusBadge.text}`}>
+                                            {statusBadge.label}
+                                        </span>
+                                    </div>
+                                    <div className="text-xs md:text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                                        <span className="bg-white/5 px-2 py-0.5 rounded">{problem.platform}</span>
+                                        {problem.next_review_date && (
+                                            <span className="flex items-center gap-1">
+                                                <Calendar size={12} />
+                                                {problem.next_review_date}
+                                            </span>
+                                        )}
+                                        {problem.failure_count > 0 && (
+                                            <span className="text-rose-400">
+                                                {problem.failure_count} failed
+                                            </span>
+                                        )}
+                                    </div>
                                     {problem.tags.length > 0 && (
-                                        <span className="truncate max-w-[200px]">{problem.tags.join(', ')}</span>
+                                        <div className="text-xs text-muted-foreground mt-1 truncate max-w-[300px]">
+                                            {problem.tags.join(', ')}
+                                        </div>
                                     )}
                                 </div>
-                            </div>
 
-                            <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
-                                <button
-                                    onClick={async () => {
-                                        if (confirm('Mark as solved today?')) {
-                                            try {
-                                                await api.post(`/problems/${problem.id}/attempts`, {
-                                                    solved: true,
-                                                    time_taken_minutes: 0,
-                                                    approach_summary: "Manual log",
-                                                    confidence_score: 5
-                                                });
-                                                alert("Marked as solved!");
-                                            } catch (err) {
-                                                alert("Failed to log attempt");
+                                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm('Mark as solved today?')) {
+                                                try {
+                                                    await api.post(`/problems/${problem.id}/attempts`, {
+                                                        solved: true,
+                                                        time_taken_minutes: 0,
+                                                        approach_summary: "Manual log",
+                                                        confidence_score: 5
+                                                    });
+                                                    fetchProblems();
+                                                } catch (err) {
+                                                    alert("Failed to log attempt");
+                                                }
                                             }
-                                        }
-                                    }}
-                                    className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                                    title="Mark as Solved"
-                                >
-                                    <Check size={18} />
-                                </button>
-                                <a
-                                    href={problem.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10 transition-colors"
-                                    title="Open Problem"
-                                >
-                                    <ExternalLink size={18} />
-                                </a>
+                                        }}
+                                        className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                        title="Mark as Solved"
+                                    >
+                                        <Check size={18} />
+                                    </button>
+                                    <a
+                                        href={problem.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2.5 rounded-xl bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10 transition-colors"
+                                        title="Open Problem"
+                                    >
+                                        <ExternalLink size={18} />
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    ))}
-
-                    {filteredProblems.length === 0 && searchTerm && (
-                        <div className="text-center py-12 text-muted-foreground">
-                            No problems found matching "{searchTerm}"
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
             )}
         </div>
