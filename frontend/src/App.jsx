@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import ProblemList from './pages/ProblemList';
 import ReviewSession from './pages/ReviewSession';
 import Profile from './pages/Profile';
+import Insights from './pages/Insights';
 import Login from './pages/Login';
 
 function ProtectedRoute({ children }) {
@@ -31,6 +32,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="problems" element={<ProblemList />} />
             <Route path="reviews" element={<ReviewSession />} />
+            <Route path="insights" element={<Insights />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>

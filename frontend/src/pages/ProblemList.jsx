@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
-import { Plus, Link as LinkIcon, ExternalLink, Check, Search, Loader2, FolderOpen, X } from 'lucide-react';
+import { Plus, Link as LinkIcon, ExternalLink, Check, Search, Loader2, FolderOpen, X, Download } from 'lucide-react';
 
 export default function ProblemList() {
     const [problems, setProblems] = useState([]);
@@ -8,6 +8,8 @@ export default function ProblemList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [fetchingTags, setFetchingTags] = useState(false);
+    const [fetchError, setFetchError] = useState(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -51,10 +53,38 @@ export default function ProblemList() {
         }
     };
 
+    const handleFetchTags = async () => {
+        if (!formData.url) {
+            setFetchError('Please enter a URL first');
+            return;
+        }
+        setFetchingTags(true);
+        setFetchError(null);
+        try {
+            const res = await api.get('/tags/fetch', { params: { url: formData.url } });
+            if (res.data.error) {
+                setFetchError(res.data.error);
+            } else if (res.data.tags.length > 0) {
+                setFormData({
+                    ...formData,
+                    tags: res.data.tags.join(', ')
+                });
+            } else {
+                setFetchError('No tags found for this problem');
+            }
+        } catch (err) {
+            console.error(err);
+            setFetchError('Failed to fetch tags');
+        } finally {
+            setFetchingTags(false);
+        }
+    };
+
     const filteredProblems = problems.filter(p =>
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
 
     const getDifficultyBadge = (difficulty) => {
         switch (difficulty) {
@@ -146,12 +176,31 @@ export default function ProblemList() {
 
                         <div>
                             <label className="block text-sm text-muted-foreground mb-2">Tags (comma separated)</label>
-                            <input
-                                value={formData.tags}
-                                onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                                className="input-modern"
-                                placeholder="array, dp, sliding window"
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    value={formData.tags}
+                                    onChange={e => { setFormData({ ...formData, tags: e.target.value }); setFetchError(null); }}
+                                    className="input-modern flex-1"
+                                    placeholder="array, dp, sliding window"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleFetchTags}
+                                    disabled={fetchingTags || !formData.url}
+                                    className="btn-secondary flex items-center gap-2 whitespace-nowrap"
+                                    title="Fetch tags from LeetCode or Codeforces"
+                                >
+                                    {fetchingTags ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                        <Download size={16} />
+                                    )}
+                                    <span className="hidden sm:inline">Fetch Tags</span>
+                                </button>
+                            </div>
+                            {fetchError && (
+                                <p className="text-rose-400 text-xs mt-1">{fetchError}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-2">

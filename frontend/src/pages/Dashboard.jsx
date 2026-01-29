@@ -7,19 +7,22 @@ import ActivityCalendar from '../components/ActivityCalendar';
 export default function Dashboard() {
     const [pendingCount, setPendingCount] = useState(0);
     const [totalProblems, setTotalProblems] = useState(0);
+    const [streak, setStreak] = useState(0);
     const [loading, setLoading] = useState(true);
     const [displayName, setDisplayName] = useState('Engineer');
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [reviewsRes, problemsRes, profileRes] = await Promise.all([
+                const [reviewsRes, problemsRes, profileRes, streakRes] = await Promise.all([
                     api.get('/reviews/today'),
                     api.get('/problems'),
-                    api.get('/profile/')
+                    api.get('/profile/'),
+                    api.get('/analytics/completion-streak')
                 ]);
                 setPendingCount(reviewsRes.data.length);
                 setTotalProblems(problemsRes.data.length);
+                setStreak(streakRes.data.current_streak || 0);
 
                 // Set display name from profile
                 const profile = profileRes.data;
@@ -40,7 +43,7 @@ export default function Dashboard() {
     const stats = [
         { label: 'Problems Tracked', value: totalProblems, icon: Target, color: 'text-blue-400' },
         { label: 'Due Today', value: pendingCount, icon: Calendar, color: 'text-amber-400' },
-        { label: 'Streak', value: '–', icon: Zap, color: 'text-emerald-400' },
+        { label: 'Streak', value: streak, icon: Zap, color: 'text-emerald-400' },
     ];
 
     return (

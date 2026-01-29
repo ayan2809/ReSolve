@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, CheckCircle, LogOut, Sparkles, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, List, CheckCircle, LogOut, Sparkles, Menu, X, User, BarChart3 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
@@ -93,6 +93,7 @@ export default function Layout({ children }) {
                     <NavItem to="/" icon={LayoutDashboard} label="Dashboard" onClick={closeMobileMenu} />
                     <NavItem to="/reviews" icon={CheckCircle} label="Reviews" onClick={closeMobileMenu} />
                     <NavItem to="/problems" icon={List} label="All Problems" onClick={closeMobileMenu} />
+                    <NavItem to="/insights" icon={BarChart3} label="Insights" onClick={closeMobileMenu} />
                     <NavItem to="/profile" icon={User} label="Profile" onClick={closeMobileMenu} />
                 </nav>
 

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pyt
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import problems, reviews, stats, profile
+from routers import problems, reviews, stats, profile, reflections, analytics, tags
 from scheduler import start_scheduler, shutdown_scheduler
 
 @asynccontextmanager
@@ -42,6 +42,9 @@ app.include_router(problems.router)
 app.include_router(reviews.router)
 app.include_router(stats.router)
 app.include_router(profile.router)
+app.include_router(reflections.router)
+app.include_router(analytics.router)
+app.include_router(tags.router)
 
 @app.get("/")
 def read_root():
