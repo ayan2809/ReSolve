@@ -48,6 +48,33 @@ def get_todays_reviews(
     return reviews
 
 
+@router.get("/upcoming", response_model=List[ReviewScheduleRead])
+def get_upcoming_reviews(
+    session: Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get pending reviews for the next 7 days (excluding today).
+    Used to show "Next review in X days" on Dashboard.
+    """
+    from datetime import timedelta
+    today = date.today()
+    week_ahead = today + timedelta(days=7)
+    
+    statement = (
+        select(ReviewSchedule)
+        .join(Problem)
+        .options(selectinload(ReviewSchedule.problem))
+        .where(ReviewSchedule.status == "pending")
+        .where(ReviewSchedule.scheduled_date > today)
+        .where(ReviewSchedule.scheduled_date <= week_ahead)
+        .where(Problem.user_id == user_id)
+        .order_by(ReviewSchedule.scheduled_date)
+    )
+    reviews = session.exec(statement).all()
+    return reviews
+
+
 @router.get("/failed", response_model=List[ProblemRead])
 def get_failed_problems(
     session: Session = Depends(get_session),

@@ -16,14 +16,8 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [
-                    todayRes,
-                    upcomingRes,
-                    profileRes,
-                    analyticsRes,
-                    streakRes,
-                    failureRes
-                ] = await Promise.all([
+                // Use Promise.allSettled to handle individual failures gracefully
+                const results = await Promise.allSettled([
                     api.get('/reviews/today'),
                     api.get('/reviews/upcoming'),
                     api.get('/profile/'),
@@ -32,17 +26,31 @@ export default function Dashboard() {
                     api.get('/analytics/failure-streaks')
                 ]);
 
-                setTodayReviews(todayRes.data);
-                setUpcomingReviews(upcomingRes.data);
-                setAnalytics(analyticsRes.data);
-                setCompletionStreak(streakRes.data.current_streak || 0);
-                setFailureStreaks(failureRes.data);
+                // Extract data from successful responses
+                const [todayRes, upcomingRes, profileRes, analyticsRes, streakRes, failureRes] = results;
 
-                const profile = profileRes.data;
-                if (profile.display_name) {
-                    setDisplayName(profile.display_name);
-                } else if (profile.username) {
-                    setDisplayName(profile.username);
+                if (todayRes.status === 'fulfilled') {
+                    setTodayReviews(todayRes.value.data);
+                }
+                if (upcomingRes.status === 'fulfilled') {
+                    setUpcomingReviews(upcomingRes.value.data);
+                }
+                if (analyticsRes.status === 'fulfilled') {
+                    setAnalytics(analyticsRes.value.data);
+                }
+                if (streakRes.status === 'fulfilled') {
+                    setCompletionStreak(streakRes.value.data.current_streak || 0);
+                }
+                if (failureRes.status === 'fulfilled') {
+                    setFailureStreaks(failureRes.value.data);
+                }
+                if (profileRes.status === 'fulfilled') {
+                    const profile = profileRes.value.data;
+                    if (profile.display_name) {
+                        setDisplayName(profile.display_name);
+                    } else if (profile.username) {
+                        setDisplayName(profile.username);
+                    }
                 }
             } catch (err) {
                 console.error(err);
