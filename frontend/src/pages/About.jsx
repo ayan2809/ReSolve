@@ -10,7 +10,12 @@ import {
     CheckCircle,
     Clock,
     ArrowRight,
-    Brain
+    Brain,
+    Filter,
+    Search,
+    Link,
+    AlertTriangle,
+    Layout
 } from 'lucide-react';
 
 export default function About() {
@@ -50,6 +55,22 @@ export default function About() {
             iconColor: 'text-amber-400'
         },
         {
+            icon: Filter,
+            title: 'Smart Filtering',
+            description: 'Filter problems by status (active, failed, completed), due date, platform, difficulty, and tags.',
+            color: 'from-cyan-500/20 to-blue-500/20',
+            iconColor: 'text-cyan-400',
+            isNew: true
+        },
+        {
+            icon: Layout,
+            title: 'Command Center Dashboard',
+            description: "See today's reviews, learning signals, weak areas, and streaks — all at a glance.",
+            color: 'from-violet-500/20 to-purple-500/20',
+            iconColor: 'text-violet-400',
+            isNew: true
+        },
+        {
             icon: Tag,
             title: 'Auto Tag Fetching',
             description: 'Automatically fetch problem tags from LeetCode and Codeforces for better organization.',
@@ -66,9 +87,17 @@ export default function About() {
         {
             icon: BarChart3,
             title: 'Deep Insights',
-            description: 'Track performance by difficulty, tags, and time. Identify weak areas and improve.',
+            description: 'Track failures by interval and tag. Identify weak areas like "7-day reviews" or "graphs".',
             color: 'from-emerald-500/20 to-teal-500/20',
             iconColor: 'text-emerald-400'
+        },
+        {
+            icon: AlertTriangle,
+            title: 'Learning Signals',
+            description: 'Get intelligent insights like "You fail most at 7-day reviews" based on your patterns.',
+            color: 'from-amber-500/20 to-yellow-500/20',
+            iconColor: 'text-amber-400',
+            isNew: true
         },
         {
             icon: Calendar,
@@ -83,6 +112,21 @@ export default function About() {
             description: 'Build momentum with consecutive review streaks. Consistency beats intensity.',
             color: 'from-indigo-500/20 to-blue-500/20',
             iconColor: 'text-indigo-400'
+        },
+        {
+            icon: Search,
+            title: 'URL Persistence',
+            description: 'Filters persist in URL — bookmark filtered views or share specific problem sets.',
+            color: 'from-slate-500/20 to-gray-500/20',
+            iconColor: 'text-slate-400',
+            isNew: true
+        },
+        {
+            icon: Link,
+            title: 'Multi-Platform Support',
+            description: 'Track problems from LeetCode, Codeforces, HackerRank, and any other platform.',
+            color: 'from-orange-500/20 to-red-500/20',
+            iconColor: 'text-orange-400'
         },
     ];
 
@@ -201,8 +245,13 @@ export default function About() {
                     {features.map((feature) => (
                         <div
                             key={feature.title}
-                            className="glass rounded-2xl p-6 group hover:bg-white/10 transition-all duration-300"
+                            className="glass rounded-2xl p-6 group hover:bg-white/10 transition-all duration-300 relative"
                         >
+                            {feature.isNew && (
+                                <span className="absolute top-4 right-4 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                                    NEW
+                                </span>
+                            )}
                             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}>
                                 <feature.icon size={24} className={feature.iconColor} />
                             </div>
