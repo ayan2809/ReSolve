@@ -7,6 +7,7 @@ import ReviewSession from './pages/ReviewSession';
 import Profile from './pages/Profile';
 import Insights from './pages/Insights';
 import Login from './pages/Login';
+import About from './pages/About';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ function App() {
             <Route path="reviews" element={<ReviewSession />} />
             <Route path="insights" element={<Insights />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="about" element={<About />} />
           </Route>
         </Routes>
       </AuthProvider>
