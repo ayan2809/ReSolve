@@ -108,7 +108,7 @@
     "serviceProviderAwsCfStackName": "resolve-backend-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-southeast-2:355426657170:stack/resolve-backend-dev/a10f0240-ecb0-11f0-848b-0a18435d4f9b",
     "serviceProviderAwsCfStackCreated": "2026-01-08T16:39:41.612Z",
-    "serviceProviderAwsCfStackUpdated": "2026-01-29T10:54:59.809Z",
+    "serviceProviderAwsCfStackUpdated": "2026-01-29T11:16:09.156Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
@@ -129,7 +129,7 @@
       },
       {
         "OutputKey": "ApiLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-api:32",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-api:33",
         "Description": "Current Lambda function version",
         "ExportName": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
       },
@@ -140,7 +140,7 @@
       },
       {
         "OutputKey": "CronLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-cron:30",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-cron:31",
         "Description": "Current Lambda function version",
         "ExportName": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
       },
@@ -260,7 +260,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-              "S3Key": "serverless/resolve-backend/dev/1769684751714-2026-01-29T11:05:51.714Z/resolve-backend.zip"
+              "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
             },
             "Handler": "main.handler",
             "Runtime": "python3.12",
@@ -290,7 +290,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-              "S3Key": "serverless/resolve-backend/dev/1769684751714-2026-01-29T11:05:51.714Z/resolve-backend.zip"
+              "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
             },
             "Handler": "services.scheduler_logic.run_daily_reviews",
             "Runtime": "python3.12",
@@ -315,14 +315,14 @@
             "CronLogGroup"
           ]
         },
-        "ApiLambdaVersionVxVi06d8Mw1iD7DgHRrQKDIj59BHtVsZOWQwmGc": {
+        "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ApiLambdaFunction"
             },
-            "CodeSha256": "TyasU0N/yk6hLEmkp6LTbeJ1zrcnO59Mn9tfHfsdcso="
+            "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
           }
         },
         "ApiLambdaFunctionUrl": {
@@ -365,14 +365,14 @@
             "InvokedViaFunctionUrl": true
           }
         },
-        "CronLambdaVersionTDAPYZcaRZycTfeoiSZmfpSl7OAiuvumpBUCQsB6l0": {
+        "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "CronLambdaFunction"
             },
-            "CodeSha256": "TyasU0N/yk6hLEmkp6LTbeJ1zrcnO59Mn9tfHfsdcso="
+            "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
           }
         },
         "CronEventsRuleSchedule1": {
@@ -530,7 +530,7 @@
             "ApiLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1769684737063": {
+        "ApiGatewayDeployment1769685635825": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -742,7 +742,7 @@
         "ApiLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ApiLambdaVersionVxVi06d8Mw1iD7DgHRrQKDIj59BHtVsZOWQwmGc"
+            "Ref": "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M"
           },
           "Export": {
             "Name": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
@@ -763,7 +763,7 @@
         "CronLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "CronLambdaVersionTDAPYZcaRZycTfeoiSZmfpSl7OAiuvumpBUCQsB6l0"
+            "Ref": "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg"
           },
           "Export": {
             "Name": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
