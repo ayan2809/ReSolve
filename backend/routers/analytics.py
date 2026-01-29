@@ -1,21 +1,30 @@
 """
 Analytics Router - Provides insights into learning failure patterns.
 
-All analytics are derived from stored data. No manual tagging.
-Designed for clarity over decoration - no gamification.
+FIXED: Now derives analytics from ReviewSchedule status instead of FailureReflection.
+This ensures analytics populate automatically when reviews fail, without requiring
+user to manually submit reflections.
+
+Failure statuses:
+- 'failed_attempt': User attempted but didn't solve
+- 'expired': User missed the scheduled review date
 """
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 from sqlalchemy import func, distinct
+from sqlalchemy.orm import selectinload
 from typing import List, Dict, Any
 from datetime import date, timedelta
 from collections import defaultdict
 
 from database import get_session
-from models import FailureReflection, Problem, ReviewSchedule, Attempt
+from models import Problem, ReviewSchedule, Attempt
 from auth import get_current_user_id
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+# Statuses that count as "failures" for analytics
+FAILURE_STATUSES = ["failed_attempt", "expired"]
 
 
 @router.get("/failure-log")
@@ -26,36 +35,37 @@ def get_failure_log(
     user_id: str = Depends(get_current_user_id)
 ) -> List[Dict[str, Any]]:
     """
-    Returns paginated list of all failed problems with reflection snippets.
+    Returns paginated list of all failed reviews.
     
     Shows:
     - Problem title and tags
     - Interval where it failed (1d/7d/30d/90d)
     - Failure date
-    - Reflection snippet (first 100 chars)
+    - Failure type (failed_attempt or expired)
     """
-    reflections = session.exec(
-        select(FailureReflection)
-        .where(FailureReflection.user_id == user_id)
-        .order_by(FailureReflection.failure_date.desc())
+    failed_reviews = session.exec(
+        select(ReviewSchedule)
+        .join(Problem)
+        .options(selectinload(ReviewSchedule.problem))
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
+        .order_by(ReviewSchedule.scheduled_date.desc())
         .offset(offset)
         .limit(limit)
     ).all()
     
     result = []
-    for r in reflections:
-        # Get problem details
-        problem = session.get(Problem, r.problem_id)
-        if problem:
-            result.append({
-                "problem_id": r.problem_id,
-                "problem_title": problem.title,
-                "tags": problem.tags,
-                "interval_label": r.interval_label,
-                "failure_date": r.failure_date.isoformat(),
-                "reflection_snippet": r.reflection_text[:100] + "..." if len(r.reflection_text) > 100 else r.reflection_text,
-                "structured_reasons": r.structured_reasons
-            })
+    for r in failed_reviews:
+        problem = r.problem
+        result.append({
+            "problem_id": problem.id,
+            "problem_title": problem.title,
+            "tags": problem.tags,
+            "interval_label": r.interval_label,
+            "failure_date": r.scheduled_date.isoformat(),
+            "failure_type": r.status,
+            "reflection_snippet": f"Review {r.status.replace('_', ' ')}"  # Placeholder until reflection added
+        })
     
     return result
 
@@ -73,14 +83,16 @@ def get_failure_by_interval(
     - High 7d failures = short-term retention issues
     - High 30d/90d failures = long-term retention issues
     """
-    # Count failures by interval
+    # Count failures by interval from ReviewSchedule
     counts = session.exec(
         select(
-            FailureReflection.interval_label,
-            func.count(FailureReflection.id).label("count")
+            ReviewSchedule.interval_label,
+            func.count(ReviewSchedule.id).label("count")
         )
-        .where(FailureReflection.user_id == user_id)
-        .group_by(FailureReflection.interval_label)
+        .join(Problem)
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
+        .group_by(ReviewSchedule.interval_label)
     ).all()
     
     # Convert to dict
@@ -108,19 +120,20 @@ def get_failure_by_tag(
     
     Identifies which problem categories fail most often.
     """
-    # Get all reflections with problem data
-    reflections = session.exec(
-        select(FailureReflection)
-        .where(FailureReflection.user_id == user_id)
+    # Get all failed reviews with problem data
+    failed_reviews = session.exec(
+        select(ReviewSchedule)
+        .join(Problem)
+        .options(selectinload(ReviewSchedule.problem))
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
     ).all()
     
     # Count failures by tag
     tag_counts = defaultdict(int)
-    for r in reflections:
-        problem = session.get(Problem, r.problem_id)
-        if problem:
-            for tag in problem.tags:
-                tag_counts[tag.lower()] += 1
+    for r in failed_reviews:
+        for tag in r.problem.tags:
+            tag_counts[tag.lower()] += 1
     
     total = sum(tag_counts.values()) or 1
     
@@ -147,35 +160,50 @@ def get_confidence_outcome(
     
     Highlights overconfidence: high confidence scores followed by failure.
     """
-    reflections = session.exec(
-        select(FailureReflection)
-        .where(FailureReflection.user_id == user_id)
-        .where(FailureReflection.last_confidence_score.isnot(None))
+    # Get failed reviews
+    failed_reviews = session.exec(
+        select(ReviewSchedule)
+        .join(Problem)
+        .options(selectinload(ReviewSchedule.problem))
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
     ).all()
     
     high_confidence_failures = 0  # Score 4-5, then failed
     medium_confidence_failures = 0  # Score 3
     low_confidence_failures = 0  # Score 1-2
+    no_prior_attempt = 0
     
     overconfident_problems = []
     
-    for r in reflections:
-        score = r.last_confidence_score
-        if score >= 4:
-            high_confidence_failures += 1
-            problem = session.get(Problem, r.problem_id)
-            if problem:
+    for r in failed_reviews:
+        # Get last successful attempt before this failure
+        last_attempt = session.exec(
+            select(Attempt)
+            .where(Attempt.problem_id == r.problem_id)
+            .where(Attempt.solved == True)
+            .where(Attempt.attempt_date < r.scheduled_date)
+            .order_by(Attempt.attempt_date.desc())
+        ).first()
+        
+        if last_attempt:
+            score = last_attempt.confidence_score
+            if score >= 4:
+                high_confidence_failures += 1
                 overconfident_problems.append({
-                    "problem_title": problem.title,
+                    "problem_title": r.problem.title,
                     "confidence_score": score,
-                    "failure_date": r.failure_date.isoformat()
+                    "failure_date": r.scheduled_date.isoformat()
                 })
-        elif score == 3:
-            medium_confidence_failures += 1
+            elif score == 3:
+                medium_confidence_failures += 1
+            else:
+                low_confidence_failures += 1
         else:
-            low_confidence_failures += 1
+            no_prior_attempt += 1
     
-    total = len(reflections) or 1
+    total = high_confidence_failures + medium_confidence_failures + low_confidence_failures
+    total = total or 1  # Avoid division by zero
     
     return {
         "high_confidence_failures": high_confidence_failures,
@@ -207,25 +235,14 @@ def get_time_of_day_failures(
     user_id: str = Depends(get_current_user_id)
 ) -> List[Dict[str, int]]:
     """
-    Failure distribution by hour of day.
+    Failure distribution by scheduled date.
     
-    Identifies fatigue or context effects:
-    - Morning failures = rushed starts
-    - Afternoon failures = post-lunch dip
-    - Evening failures = fatigue accumulation
+    NOTE: Without reflection data, we can't track exact hour of failure.
+    This endpoint returns empty until reflections are implemented.
     """
-    # Count failures by hour
-    hour_counts = session.exec(
-        select(
-            FailureReflection.failure_hour,
-            func.count(FailureReflection.id).label("count")
-        )
-        .where(FailureReflection.user_id == user_id)
-        .group_by(FailureReflection.failure_hour)
-        .order_by(FailureReflection.failure_hour)
-    ).all()
-    
-    return [{"hour": row[0], "count": row[1]} for row in hour_counts]
+    # Without FailureReflection, we don't have hour data
+    # Return empty for now - this feature requires reflection flow
+    return []
 
 
 @router.get("/failure-streaks")
@@ -242,11 +259,13 @@ def get_failure_streaks(
     - External life stress
     - Need for a break
     """
-    # Get all failure dates
+    # Get all failure dates from ReviewSchedule
     failure_dates = session.exec(
-        select(distinct(FailureReflection.failure_date))
-        .where(FailureReflection.user_id == user_id)
-        .order_by(FailureReflection.failure_date)
+        select(distinct(ReviewSchedule.scheduled_date))
+        .join(Problem)
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
+        .order_by(ReviewSchedule.scheduled_date)
     ).all()
     
     if not failure_dates:
@@ -440,15 +459,17 @@ def get_analytics_summary(
     """
     Returns a summary of all analytics for the dashboard overview.
     """
-    # Total failures
+    # Total failures from ReviewSchedule
     total_failures = session.exec(
-        select(func.count(FailureReflection.id))
-        .where(FailureReflection.user_id == user_id)
+        select(func.count(ReviewSchedule.id))
+        .join(Problem)
+        .where(Problem.user_id == user_id)
+        .where(ReviewSchedule.status.in_(FAILURE_STATUSES))
     ).one()
     
     # Most common failure interval
     interval_data = get_failure_by_interval(session, user_id)
-    most_common_interval = max(interval_data.items(), key=lambda x: x[1]["count"])[0] if interval_data else None
+    most_common_interval = max(interval_data.items(), key=lambda x: x[1]["count"])[0] if any(interval_data[k]["count"] > 0 for k in interval_data) else None
     
     # Most problematic tag
     tag_data = get_failure_by_tag(session, user_id)
