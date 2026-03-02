@@ -21,33 +21,277 @@
 
 ## Architecture Overview
 
+### High-Level Design (HLD)
+
+The system follows a **three-tier architecture** with a React SPA frontend, FastAPI backend on AWS Lambda, and PostgreSQL database on Supabase.
+
+```mermaid
+flowchart TB
+    subgraph Client["Client Layer"]
+        Browser["Web Browser"]
+        SPA["React SPA<br/>(Vite + TailwindCSS)"]
+    end
+
+    subgraph CDN["Content Delivery"]
+        CF["CloudFront CDN"]
+        S3["S3 Bucket<br/>(Static Assets)"]
+    end
+
+    subgraph Auth["Authentication"]
+        SupaAuth["Supabase Auth<br/>(Magic Link + JWT)"]
+    end
+
+    subgraph Compute["Compute Layer (AWS)"]
+        APIGW["API Gateway"]
+        Lambda["Lambda Function<br/>(FastAPI + Mangum)"]
+        Cron["Lambda Cron<br/>(Daily Scheduler)"]
+    end
+
+    subgraph External["External Services"]
+        Gemini["Google Gemini API<br/>(Failure Analysis)"]
+        LeetCode["LeetCode GraphQL"]
+        Codeforces["Codeforces API"]
+    end
+
+    subgraph Data["Data Layer"]
+        Supabase["Supabase PostgreSQL"]
+    end
+
+    Browser --> CF
+    CF --> S3
+    Browser --> SPA
+    SPA --> SupaAuth
+    SPA -->|"REST + JWT"| APIGW
+    APIGW --> Lambda
+    Lambda --> Supabase
+    Lambda --> Gemini
+    Lambda --> LeetCode
+    Lambda --> Codeforces
+    Cron -->|"Daily @ midnight UTC"| Lambda
+    Cron --> Supabase
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Vite + React)                  │
-│   Dashboard │ Problems │ Reviews │ Insights │ Profile │ About  │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                │ Axios + Supabase JWT
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     BACKEND (FastAPI + SQLModel)                │
-│                                                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │   Routers   │  │   Services  │  │        Models           │ │
-│  │ • problems  │  │ • scheduler │  │ • Problem               │ │
-│  │ • reviews   │  │ • tag_fetch │  │ • Attempt               │ │
-│  │ • analytics │  │ • notifier  │  │ • ReviewSchedule        │ │
-│  │ • profile   │  └─────────────┘  │ • FailureReflection     │ │
-│  │ • stats     │                   │ • UserProfile           │ │
-│  │ • tags      │                   └─────────────────────────┘ │
-│  │ • reflect   │                                               │
-│  └─────────────┘                                               │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    DATABASE (Supabase PostgreSQL)               │
-└─────────────────────────────────────────────────────────────────┘
+
+---
+
+### Low-Level Design (LLD)
+
+#### Backend Component Architecture
+
+```mermaid
+flowchart LR
+    subgraph Entry["Entry Points"]
+        Main["main.py<br/>(FastAPI App)"]
+        Handler["Mangum Handler<br/>(Lambda Adapter)"]
+    end
+
+    subgraph Routers["API Routers"]
+        R1["problems.py"]
+        R2["reviews.py"]
+        R3["analytics.py"]
+        R4["reflections.py"]
+        R5["profile.py"]
+        R6["stats.py"]
+        R7["tags.py"]
+    end
+
+    subgraph Services["Business Logic"]
+        S1["scheduler_logic.py<br/>(Spaced Rep Core)"]
+        S2["failure_intelligence.py<br/>(Gemini AI)"]
+        S3["tag_fetcher.py<br/>(Platform APIs)"]
+        S4["notifications.py"]
+    end
+
+    subgraph Core["Core Modules"]
+        Models["models.py<br/>(SQLModel)"]
+        Schemas["schemas.py<br/>(Pydantic)"]
+        Auth["auth.py<br/>(JWT)"]
+        DB["database.py"]
+    end
+
+    Main --> Handler
+    Main --> R1 & R2 & R3 & R4 & R5 & R6 & R7
+    R2 --> S1
+    R2 --> S2
+    R7 --> S3
+    R1 & R2 & R3 & R4 --> Models
+    Models --> DB
+    R1 & R2 --> Auth
+```
+
+---
+
+#### Database Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USER_PROFILE ||--o{ PROBLEM : owns
+    USER_PROFILE ||--o{ FAILURE_REFLECTION : records
+    
+    PROBLEM ||--o{ ATTEMPT : has
+    PROBLEM ||--o{ REVIEW_SCHEDULE : scheduled_for
+    PROBLEM }o--o{ TAG : tagged_with
+    
+    REVIEW_SCHEDULE ||--o| FAILURE_REFLECTION : may_have
+    
+    USER_PROFILE {
+        int id PK
+        string user_id UK "Supabase UUID"
+        string username
+        string display_name
+        string bio
+        datetime created_at
+    }
+    
+    PROBLEM {
+        int id PK
+        string user_id FK
+        string title
+        string platform
+        string url
+        string difficulty
+        datetime created_at
+    }
+    
+    ATTEMPT {
+        int id PK
+        string user_id FK
+        int problem_id FK
+        int attempt_number
+        datetime attempt_date
+        bool solved
+        int time_taken_minutes
+        string approach_summary
+        int confidence_score
+    }
+    
+    REVIEW_SCHEDULE {
+        int id PK
+        int problem_id FK
+        date scheduled_date
+        string interval_label "1d/7d/30d/90d"
+        string status "pending/completed/failed/expired/cancelled"
+    }
+    
+    FAILURE_REFLECTION {
+        int id PK
+        string user_id FK
+        int problem_id FK
+        int review_schedule_id FK
+        date failure_date
+        string reflection_text
+        string ai_failure_type "Gemini-generated"
+        string ai_primary_reason
+        datetime ai_analyzed_at
+    }
+    
+    TAG {
+        int id PK
+        string name UK
+        string normalized_name
+    }
+```
+
+---
+
+#### Key User Flows
+
+##### 1. Review Submission Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant API as Backend API
+    participant Gemini as Gemini AI
+    participant DB as Database
+
+    U->>FE: Submit Review (solved/failed)
+    FE->>API: POST /reviews/{id}/submit
+    API->>DB: Validate review is for today
+    
+    alt Solved
+        API->>DB: Update status → completed
+        API-->>FE: Success
+    else Failed
+        API->>DB: Update status → failed_attempt
+        API->>DB: Cancel future pending reviews
+        API->>DB: Generate new 1d/7d/30d/90d schedules
+        API->>Gemini: Analyze failure (async)
+        Gemini-->>API: Structured insights
+        API->>DB: Store AI insights in FailureReflection
+        API-->>FE: Success + AI analysis
+    end
+    
+    FE-->>U: Show result
+```
+
+##### 2. Daily Cron Expiration Flow
+
+```mermaid
+sequenceDiagram
+    participant Cron as Lambda Cron
+    participant DB as Database
+
+    Note over Cron: Triggers daily at midnight UTC
+    
+    Cron->>DB: SELECT pending reviews WHERE scheduled_date < today
+    
+    loop For each overdue review
+        Cron->>DB: Update status → expired
+        Cron->>DB: Cancel remaining pending reviews for problem
+        Cron->>DB: Generate new 1d/7d/30d/90d schedules from today
+    end
+    
+    Cron-->>Cron: Log summary
+```
+
+##### 3. AI Failure Analysis Flow
+
+```mermaid
+flowchart TD
+    A[User submits failed review] --> B{reflection_text provided?}
+    B -->|No| C[Return 400 Bad Request]
+    B -->|Yes| D[Load problem context]
+    D --> E[Load last 5 attempts]
+    E --> F[Construct Gemini prompt]
+    F --> G{GEMINI_API_KEY set?}
+    G -->|No| H[Return stub response]
+    G -->|Yes| I[Call Gemini 2.0 Flash API]
+    I --> J{API success?}
+    J -->|No| H
+    J -->|Yes| K[Parse JSON response]
+    K --> L[Validate with Pydantic schema]
+    L --> M[Store in FailureReflection.ai_* fields]
+    M --> N[Return analysis to user]
+```
+
+---
+
+#### Spaced Repetition State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: Problem added
+    
+    pending --> completed: Solved on schedule
+    pending --> failed_attempt: Failed on schedule
+    pending --> expired: Missed schedule (cron)
+    
+    completed --> [*]: Chain continues
+    
+    failed_attempt --> cancelled: Future reviews cancelled
+    expired --> cancelled: Future reviews cancelled
+    
+    cancelled --> pending: New schedules generated
+    
+    note right of pending
+        Reviews appear only on
+        exact scheduled date
+    end note
+    
+    note right of failed_attempt
+        Auto-restarts from Day 1
+    end note
 ```
 
 ---

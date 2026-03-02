@@ -20,3 +20,6 @@ api.interceptors.request.use(async (config) => {
 });
 
 export default api;
+
+// Named API helpers
+export const resetPendingReviews = () => api.post('/reviews/reset-pending');

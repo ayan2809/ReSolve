@@ -123,8 +123,41 @@ Personalize with username, display name, and bio.
 | **Backend** | FastAPI, SQLModel, Pydantic, Mangum |
 | **Database** | PostgreSQL (Supabase) |
 | **Auth** | Supabase Auth (JWT) |
+| **AI** | Google Gemini 2.0 Flash (Failure Analysis) |
 | **Deployment** | AWS Lambda, API Gateway, S3, CloudFront |
 | **IaC** | Serverless Framework |
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["🖥️ Client"]
+        Browser["Browser"]
+        React["React SPA"]
+    end
+
+    subgraph AWS["☁️ AWS"]
+        CF["CloudFront"]
+        S3["S3"]
+        Lambda["Lambda<br/>(FastAPI)"]
+        Cron["⏰ Daily Cron"]
+    end
+
+    subgraph External["🔌 External"]
+        Supabase["Supabase<br/>(Auth + DB)"]
+        Gemini["Gemini AI"]
+    end
+
+    Browser --> CF --> S3
+    React -->|JWT| Lambda
+    Lambda --> Supabase
+    Lambda --> Gemini
+    Cron --> Lambda
+```
+
+> 📖 See [DOCUMENTATION.md](./DOCUMENTATION.md) for detailed Low-Level Design diagrams.
 
 ---
 

@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
-import { User, Save, Loader2 } from 'lucide-react';
+import { resetPendingReviews } from '../api/client';
+import { User, Save, Loader2, RotateCcw, AlertTriangle, X } from 'lucide-react';
 
 export default function Profile() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
+
+    // Reset schedule state
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetting, setResetting] = useState(false);
+    const [resetMessage, setResetMessage] = useState('');
 
     const [formData, setFormData] = useState({
         username: '',
@@ -49,6 +55,21 @@ export default function Profile() {
             setMessage('Failed to update profile');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleReset = async () => {
+        setResetting(true);
+        try {
+            const res = await resetPendingReviews();
+            const count = res.data.cancelled_count;
+            setResetMessage(`Done — ${count} pending review${count !== 1 ? 's' : ''} cancelled. Your problems and past data are untouched.`);
+            setShowResetModal(false);
+        } catch {
+            setResetMessage('Failed to reset. Please try again.');
+        } finally {
+            setResetting(false);
+            setTimeout(() => setResetMessage(''), 5000);
         }
     };
 
@@ -117,8 +138,8 @@ export default function Profile() {
 
                 {message && (
                     <div className={`p-3 rounded-xl text-sm ${message.includes('success')
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                         }`}>
                         {message}
                     </div>
@@ -142,6 +163,80 @@ export default function Profile() {
                     )}
                 </button>
             </form>
+
+            {/* Danger Zone */}
+            <div className="glass rounded-xl md:rounded-2xl p-4 md:p-6 border border-rose-500/20">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-rose-400 mb-1">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Cancel all upcoming reviews and start with a clean slate. Your problems, attempts, and past analytics will not be affected.
+                </p>
+
+                <button
+                    type="button"
+                    onClick={() => setShowResetModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors"
+                >
+                    <RotateCcw size={16} />
+                    Start Fresh
+                </button>
+
+                {resetMessage && (
+                    <p className={`mt-3 text-sm ${resetMessage.startsWith('Done') ? 'text-emerald-400' : 'text-rose-400'
+                        }`}>{resetMessage}</p>
+                )}
+            </div>
+
+            {/* Confirmation Modal */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="glass rounded-2xl p-6 w-full max-w-md space-y-4 border border-rose-500/30">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-rose-500/15 flex items-center justify-center flex-shrink-0">
+                                    <AlertTriangle size={20} className="text-rose-400" />
+                                </div>
+                                <h3 className="font-semibold text-lg">Reset Schedule?</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowResetModal(false)}
+                                className="text-muted-foreground hover:text-foreground transition-colors mt-1"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            This will cancel <strong className="text-foreground">all pending scheduled reviews</strong>. Your problems, past attempts, reflections, and analytics will not be deleted.
+                        </p>
+                        <p className="text-xs text-rose-400/80 bg-rose-500/10 rounded-lg px-3 py-2">
+                            This action cannot be undone. You will need to manually restart reviews for each problem.
+                        </p>
+
+                        <div className="flex gap-3 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setShowResetModal(false)}
+                                disabled={resetting}
+                                className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                disabled={resetting}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 transition-colors disabled:opacity-60"
+                            >
+                                {resetting ? (
+                                    <><Loader2 size={16} className="animate-spin" /> Resetting...</>
+                                ) : (
+                                    <><RotateCcw size={16} /> Confirm Reset</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

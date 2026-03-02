@@ -152,7 +152,7 @@ def restart_spaced_repetition(
 
 
 @router.post("/{schedule_id}/submit")
-def submit_review(
+async def submit_review(
     schedule_id: int,
     attempt_data: AttemptCreate,
     session: Session = Depends(get_session),
@@ -163,7 +163,23 @@ def submit_review(
     
     If solved: Mark as completed, continue the repetition chain.
     If not solved: Mark as failed_attempt, reset the chain from Day 1.
+    
+    FAILURE INTELLIGENCE:
+    When solved=False, reflection_text is REQUIRED. This triggers:
+    1. Creation of a FailureReflection record
+    2. Gemini-powered analysis of why the user failed
+    3. AI insights stored for learning analytics
+    
+    The AI analysis is async and fail-safe - errors are logged but don't block.
     """
+    # Validate reflection_text is provided for failed reviews
+    if not attempt_data.solved:
+        if not attempt_data.reflection_text or not attempt_data.reflection_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="reflection_text is required when submitting a failed review. Please explain why you failed."
+            )
+    
     # Verify ownership via join
     review = session.exec(
         select(ReviewSchedule)
@@ -193,11 +209,14 @@ def submit_review(
     ).one()
     attempt_number = count + 1
     
+    # Remove reflection_text from attempt_data before creating Attempt
+    # (it's not part of the Attempt model)
+    attempt_dict = attempt_data.model_dump(exclude={"reflection_text"})
     new_attempt = Attempt(
         problem_id=review.problem_id,
         user_id=user_id,
         attempt_number=attempt_number,
-        **attempt_data.model_dump()
+        **attempt_dict
     )
     session.add(new_attempt)
     session.commit()
@@ -210,4 +229,62 @@ def submit_review(
         new_attempt.attempt_date.date()
     )
     
-    return {"message": "Review submitted successfully", "attempt_id": new_attempt.id}
+    response = {"message": "Review submitted successfully", "attempt_id": new_attempt.id}
+    
+    # 3. If failed, run failure intelligence analysis
+    if not attempt_data.solved:
+        from services.failure_intelligence import analyze_failed_review
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Run async Gemini analysis
+            analysis_result = await analyze_failed_review(
+                session=session,
+                review_schedule_id=schedule_id,
+                reflection_text=attempt_data.reflection_text
+            )
+            
+            if analysis_result["success"]:
+                response["failure_analysis"] = analysis_result["analysis"]
+                response["reflection_id"] = analysis_result["reflection_id"]
+                logger.info(f"Failure intelligence analysis completed for review {schedule_id}")
+            else:
+                logger.warning(f"Failure intelligence analysis failed: {analysis_result.get('error')}")
+                response["failure_analysis_error"] = "AI analysis unavailable, reflection still recorded"
+                
+        except Exception as e:
+            # CRITICAL: Never let Gemini failures block the review submission
+            logger.error(f"Failure intelligence service error: {e}")
+            response["failure_analysis_error"] = "AI analysis unavailable"
+    
+    return response
+
+
+@router.post("/reset-pending")
+def reset_pending_reviews(
+    session: Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Cancels ALL pending review schedules for the authenticated user.
+
+    SAFE - only touches status == "pending" rows. Does NOT modify:
+    - Problems, Attempts, or FailureReflections
+    - Rows with status: completed, failed_attempt, expired, cancelled
+    - Any data belonging to other users (scoped via Problem.user_id join)
+    """
+    pending = session.exec(
+        select(ReviewSchedule)
+        .join(Problem)
+        .where(ReviewSchedule.status == "pending")
+        .where(Problem.user_id == user_id)
+    ).all()
+
+    count = len(pending)
+    for schedule in pending:
+        schedule.status = "cancelled"
+        session.add(schedule)
+    session.commit()
+
+    return {"message": "Reset complete.", "cancelled_count": count}
