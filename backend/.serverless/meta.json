@@ -1,6 +1,6 @@
 {
   "/Volumes/Projects/ReSolve/backend/serverless.yml": {
-    "versionFramework": "4.31.2",
+    "versionFramework": "4.33.0",
     "servicePath": "/Volumes/Projects/ReSolve/backend/serverless.yml",
     "serviceConfigFileName": "serverless.yml",
     "service": {
@@ -14,6 +14,7 @@
         "environment": {
           "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
           "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+          "GEMINI_API_KEY": "<REDACTED>",
           "NOTIFICATION_TIME": "09:00"
         },
         "stage": "dev",
@@ -79,6 +80,7 @@
       "environment": {
         "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
         "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+        "GEMINI_API_KEY": "<REDACTED>",
         "NOTIFICATION_TIME": "09:00"
       },
       "stage": "dev",
@@ -93,13 +95,11 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "serviceRawFile": "service: resolve-backend\n\nprovider:\n  name: aws\n  runtime: python3.12\n  region: ap-southeast-2\n  memorySize: 512\n  timeout: 30\n  environment:\n    DATABASE_URL: ${env:DATABASE_URL}\n    SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}\n    NOTIFICATION_TIME: \"09:00\"\n\nplugins:\n  - serverless-lift\n\nconstructs:\n  frontend:\n    type: single-page-app\n    path: ../frontend/dist\n    framework: vite\n\npackage:\n  individually: false\n  patterns:\n    - \"!node_modules/**\"\n    - \"!frontend/**\"\n    - \"!.git/**\"\n    - \"!.venv/**\"\n    - \"!venv/**\"\n    - \"!tests/**\"\n    - \"!.pytest_cache/**\"\n    - \"!alembic/**\"\n    - \"python_packages/**\"\n\nfunctions:\n  api:\n    handler: main.handler\n    url: true\n    events:\n      - http:\n          path: /{proxy+}\n          method: any\n          cors: true\n\n  cron:\n    handler: services.scheduler_logic.run_daily_reviews\n    events:\n      - schedule: cron(0 0 * * ? *)\n",
+    "serviceRawFile": "service: resolve-backend\n\nprovider:\n  name: aws\n  runtime: python3.12\n  region: ap-southeast-2\n  memorySize: 512\n  timeout: 30\n  environment:\n    DATABASE_URL: ${env:DATABASE_URL}\n    SUPABASE_ANON_KEY: ${env:SUPABASE_ANON_KEY}\n    GEMINI_API_KEY: ${env:GEMINI_API_KEY}\n    NOTIFICATION_TIME: \"09:00\"\n\nplugins:\n  - serverless-lift\n\nconstructs:\n  frontend:\n    type: single-page-app\n    path: ../frontend/dist\n    framework: vite\n\npackage:\n  individually: false\n  patterns:\n    - \"!node_modules/**\"\n    - \"!frontend/**\"\n    - \"!.git/**\"\n    - \"!.venv/**\"\n    - \"!venv/**\"\n    - \"!tests/**\"\n    - \"!.pytest_cache/**\"\n    - \"!alembic/**\"\n    - \"python_packages/**\"\n\nfunctions:\n  api:\n    handler: main.handler\n    url: true\n    events:\n      - http:\n          path: /{proxy+}\n          method: any\n          cors: true\n\n  cron:\n    handler: services.scheduler_logic.run_daily_reviews\n    events:\n      - schedule: cron(0 0 * * ? *)\n",
     "command": [
       "deploy"
     ],
-    "options": {
-      "force": true
-    },
+    "options": {},
     "orgId": "d1846fc1-80cc-4bea-9846-f73320505ce4",
     "orgName": "ayan2809",
     "userId": "jxwQdVM5CBK3LVkw31",
@@ -108,7 +108,7 @@
     "serviceProviderAwsCfStackName": "resolve-backend-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-southeast-2:355426657170:stack/resolve-backend-dev/a10f0240-ecb0-11f0-848b-0a18435d4f9b",
     "serviceProviderAwsCfStackCreated": "2026-01-08T16:39:41.612Z",
-    "serviceProviderAwsCfStackUpdated": "2026-01-29T11:16:09.156Z",
+    "serviceProviderAwsCfStackUpdated": "2026-01-29T16:17:42.280Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
@@ -129,7 +129,7 @@
       },
       {
         "OutputKey": "ApiLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-api:33",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-api:35",
         "Description": "Current Lambda function version",
         "ExportName": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
       },
@@ -140,7 +140,7 @@
       },
       {
         "OutputKey": "CronLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-cron:31",
+        "OutputValue": "arn:aws:lambda:ap-southeast-2:355426657170:function:resolve-backend-dev-cron:33",
         "Description": "Current Lambda function version",
         "ExportName": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
       },
@@ -260,7 +260,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-              "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
+              "S3Key": "serverless/resolve-backend/dev/1772435519199-2026-03-02T07:11:59.199Z/resolve-backend.zip"
             },
             "Handler": "main.handler",
             "Runtime": "python3.12",
@@ -271,6 +271,7 @@
               "Variables": {
                 "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
                 "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                "GEMINI_API_KEY": "<REDACTED>",
                 "NOTIFICATION_TIME": "09:00"
               }
             },
@@ -290,7 +291,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-              "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
+              "S3Key": "serverless/resolve-backend/dev/1772435519199-2026-03-02T07:11:59.199Z/resolve-backend.zip"
             },
             "Handler": "services.scheduler_logic.run_daily_reviews",
             "Runtime": "python3.12",
@@ -301,6 +302,7 @@
               "Variables": {
                 "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
                 "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                "GEMINI_API_KEY": "<REDACTED>",
                 "NOTIFICATION_TIME": "09:00"
               }
             },
@@ -315,14 +317,14 @@
             "CronLogGroup"
           ]
         },
-        "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M": {
+        "ApiLambdaVersionP3MyTNQ2ngw4DnGeibx46p7otnTePq6r2hvF6TroFuE": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ApiLambdaFunction"
             },
-            "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
+            "CodeSha256": "M0b5BhdvARAbIio/WfWHSSNDrYFMSXZfjf8O5XpLLiA="
           }
         },
         "ApiLambdaFunctionUrl": {
@@ -365,14 +367,14 @@
             "InvokedViaFunctionUrl": true
           }
         },
-        "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg": {
+        "CronLambdaVersionIb92Ry2rOS9vlTDEQWwK8jvto0qVXusevP7Kf23TjF4": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "CronLambdaFunction"
             },
-            "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
+            "CodeSha256": "M0b5BhdvARAbIio/WfWHSSNDrYFMSXZfjf8O5XpLLiA="
           }
         },
         "CronEventsRuleSchedule1": {
@@ -530,7 +532,7 @@
             "ApiLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1769685635825": {
+        "ApiGatewayDeployment1772435505719": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -742,7 +744,7 @@
         "ApiLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M"
+            "Ref": "ApiLambdaVersionP3MyTNQ2ngw4DnGeibx46p7otnTePq6r2hvF6TroFuE"
           },
           "Export": {
             "Name": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
@@ -763,7 +765,7 @@
         "CronLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg"
+            "Ref": "CronLambdaVersionIb92Ry2rOS9vlTDEQWwK8jvto0qVXusevP7Kf23TjF4"
           },
           "Export": {
             "Name": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"

@@ -10,7 +10,9 @@ import {
     Loader2,
     Brain,
     Target,
-    Flame
+    Flame,
+    Sparkles,
+    Lightbulb
 } from 'lucide-react';
 
 export default function Insights() {
@@ -22,6 +24,7 @@ export default function Insights() {
     const [confidenceData, setConfidenceData] = useState({});
     const [timeData, setTimeData] = useState([]);
     const [streakData, setStreakData] = useState({});
+    const [aiInsights, setAiInsights] = useState(null);
 
     useEffect(() => {
         fetchAllAnalytics();
@@ -36,7 +39,8 @@ export default function Insights() {
                 tagRes,
                 confRes,
                 timeRes,
-                streakRes
+                streakRes,
+                aiInsightsRes
             ] = await Promise.all([
                 api.get('/analytics/summary'),
                 api.get('/analytics/failure-log?limit=5'),
@@ -44,7 +48,8 @@ export default function Insights() {
                 api.get('/analytics/failure-by-tag'),
                 api.get('/analytics/confidence-outcome'),
                 api.get('/analytics/time-of-day'),
-                api.get('/analytics/failure-streaks')
+                api.get('/analytics/failure-streaks'),
+                api.get('/analytics/failure-insights').catch(() => ({ data: null }))
             ]);
 
             setSummary(summaryRes.data);
@@ -54,6 +59,7 @@ export default function Insights() {
             setConfidenceData(confRes.data);
             setTimeData(timeRes.data);
             setStreakData(streakRes.data);
+            setAiInsights(aiInsightsRes.data);
         } catch (err) {
             console.error('Failed to fetch analytics:', err);
         } finally {
@@ -289,6 +295,104 @@ export default function Insights() {
                         <span>12pm</span>
                         <span>6pm</span>
                         <span>11pm</span>
+                    </div>
+                </div>
+            )}
+
+            {/* ================================================================
+                AI FAILURE INSIGHTS SECTION
+                This is a LAYER ON TOP of existing analytics.
+                Data comes from Gemini analysis, NOT from ReviewSchedule.status.
+                Visually distinct to show this is AI-derived.
+            ================================================================ */}
+            {aiInsights && aiInsights.total_analyzed > 0 && (
+                <div className="mt-8 space-y-4">
+                    {/* Section Header */}
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={20} className="text-violet-400" />
+                        <h2 className="text-xl font-bold">AI Failure Insights</h2>
+                        <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full">
+                            AI-Derived
+                        </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        Gemini analyzed {aiInsights.total_analyzed} failed review{aiInsights.total_analyzed !== 1 ? 's' : ''} to identify patterns.
+                    </p>
+
+                    {/* AI Insights Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Failure Type Distribution */}
+                        <div className="glass rounded-xl p-4 md:p-6 border border-violet-500/30">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <Brain size={18} className="text-violet-400" />
+                                Failure Types
+                            </h3>
+                            {aiInsights.failure_type_distribution.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No data yet.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {aiInsights.failure_type_distribution.slice(0, 5).map((item, idx) => {
+                                        const maxCount = aiInsights.failure_type_distribution[0]?.count || 1;
+                                        const percentage = Math.round((item.count / maxCount) * 100);
+                                        return (
+                                            <div key={idx} className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span>{item.failure_type}</span>
+                                                    <span className="text-muted-foreground">{item.count}</span>
+                                                </div>
+                                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                                                        style={{ width: `${percentage}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Confidence Mismatch & Recommendations */}
+                        <div className="space-y-4">
+                            {/* Mismatch Rate Card */}
+                            <div className="glass rounded-xl p-4 border border-violet-500/30">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-semibold flex items-center gap-2">
+                                            <AlertTriangle size={16} className="text-amber-400" />
+                                            Confidence Mismatch
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            How often confidence didn't match performance
+                                        </p>
+                                    </div>
+                                    <div className="text-2xl font-bold text-amber-400">
+                                        {Math.round(aiInsights.confidence_mismatch_rate * 100)}%
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Top Recommended Actions */}
+                            <div className="glass rounded-xl p-4 border border-violet-500/30">
+                                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                    <Lightbulb size={16} className="text-emerald-400" />
+                                    AI Recommendations
+                                </h3>
+                                {aiInsights.top_recommended_actions.length === 0 ? (
+                                    <p className="text-muted-foreground text-sm">No recommendations yet.</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {aiInsights.top_recommended_actions.slice(0, 3).map((item, idx) => (
+                                            <li key={idx} className="text-sm flex items-start gap-2">
+                                                <span className="text-emerald-400 font-bold">{idx + 1}.</span>
+                                                <span className="text-muted-foreground">{item.action}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

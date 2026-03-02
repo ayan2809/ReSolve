@@ -13,6 +13,7 @@
       "environment": {
         "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
         "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+        "GEMINI_API_KEY": "AIzaSyD8AhK51Tk-_CdvZZJCWewe04M6r2MtWRk",
         "NOTIFICATION_TIME": "09:00"
       },
       "stage": "dev",
@@ -116,7 +117,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-                "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
+                "S3Key": "serverless/resolve-backend/dev/1772435519199-2026-03-02T07:11:59.199Z/resolve-backend.zip"
               },
               "Handler": "main.handler",
               "Runtime": "python3.12",
@@ -127,6 +128,7 @@
                 "Variables": {
                   "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                  "GEMINI_API_KEY": "AIzaSyD8AhK51Tk-_CdvZZJCWewe04M6r2MtWRk",
                   "NOTIFICATION_TIME": "09:00"
                 }
               },
@@ -146,7 +148,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-southeast-2-e4348100-3288",
-                "S3Key": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z/resolve-backend.zip"
+                "S3Key": "serverless/resolve-backend/dev/1772435519199-2026-03-02T07:11:59.199Z/resolve-backend.zip"
               },
               "Handler": "services.scheduler_logic.run_daily_reviews",
               "Runtime": "python3.12",
@@ -157,6 +159,7 @@
                 "Variables": {
                   "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+                  "GEMINI_API_KEY": "AIzaSyD8AhK51Tk-_CdvZZJCWewe04M6r2MtWRk",
                   "NOTIFICATION_TIME": "09:00"
                 }
               },
@@ -171,14 +174,14 @@
               "CronLogGroup"
             ]
           },
-          "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M": {
+          "ApiLambdaVersionP3MyTNQ2ngw4DnGeibx46p7otnTePq6r2hvF6TroFuE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
+              "CodeSha256": "M0b5BhdvARAbIio/WfWHSSNDrYFMSXZfjf8O5XpLLiA="
             }
           },
           "ApiLambdaFunctionUrl": {
@@ -215,14 +218,14 @@
               "InvokedViaFunctionUrl": true
             }
           },
-          "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg": {
+          "CronLambdaVersionIb92Ry2rOS9vlTDEQWwK8jvto0qVXusevP7Kf23TjF4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CronLambdaFunction"
               },
-              "CodeSha256": "gsxBuLzveYVN9C07JaoV3Um47/PIk+j7yzTCiP991XA="
+              "CodeSha256": "M0b5BhdvARAbIio/WfWHSSNDrYFMSXZfjf8O5XpLLiA="
             }
           },
           "CronEventsRuleSchedule1": {
@@ -380,7 +383,7 @@
               "ApiLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1769685635825": {
+          "ApiGatewayDeployment1772435505719": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -592,7 +595,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M"
+              "Ref": "ApiLambdaVersionP3MyTNQ2ngw4DnGeibx46p7otnTePq6r2hvF6TroFuE"
             },
             "Export": {
               "Name": "sls-resolve-backend-dev-ApiLambdaFunctionQualifiedArn"
@@ -613,7 +616,7 @@
           "CronLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg"
+              "Ref": "CronLambdaVersionIb92Ry2rOS9vlTDEQWwK8jvto0qVXusevP7Kf23TjF4"
             },
             "Export": {
               "Name": "sls-resolve-backend-dev-CronLambdaFunctionQualifiedArn"
@@ -719,7 +722,7 @@
         "timeout": 30,
         "runtime": "python3.12",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersionBWy2fmqCxiWL7scPZvA5YYJ5pQMR9BGLBYE1n0W4M"
+        "versionLogicalId": "ApiLambdaVersionP3MyTNQ2ngw4DnGeibx46p7otnTePq6r2hvF6TroFuE"
       },
       "cron": {
         "handler": "services.scheduler_logic.run_daily_reviews",
@@ -734,7 +737,7 @@
         "timeout": 30,
         "runtime": "python3.12",
         "vpc": {},
-        "versionLogicalId": "CronLambdaVersionh0HBRn6HNyC9DiLHfq4bB2oP6KyetT1eNIvvBKWpRRg"
+        "versionLogicalId": "CronLambdaVersionIb92Ry2rOS9vlTDEQWwK8jvto0qVXusevP7Kf23TjF4"
       }
     },
     "resources": {
@@ -937,6 +940,7 @@
         "environment": {
           "DATABASE_URL": "postgresql://postgres.pouibqankjxacqsbjybe:JadyResolve28091999@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres",
           "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvdWlicWFua2p4YWNxc2JqeWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4ODExNDMsImV4cCI6MjA4MzQ1NzE0M30.Aymd8YtHqLUaZj_-Id7lHCBsFeRd2p6NmSVa7D1DQAM",
+          "GEMINI_API_KEY": "AIzaSyD8AhK51Tk-_CdvZZJCWewe04M6r2MtWRk",
           "NOTIFICATION_TIME": "09:00"
         },
         "stage": "dev",
@@ -1000,7 +1004,7 @@
   },
   "package": {
     "individually": false,
-    "artifactDirectoryName": "serverless/resolve-backend/dev/1769685650444-2026-01-29T11:20:50.444Z",
+    "artifactDirectoryName": "serverless/resolve-backend/dev/1772435519199-2026-03-02T07:11:59.199Z",
     "artifact": "resolve-backend.zip"
   }
 }

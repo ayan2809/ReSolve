@@ -143,6 +143,9 @@ AWS Lambda Cron executes `services.scheduler_logic.run_daily_reviews` daily at M
 ### 4.4 Analytics Strategy
 All analytics displayed on the frontend insights dashboard (`/analytics/...` routers) derive from the `ReviewSchedule` statuses, rather than the `FailureReflection` entries, to ensure consistency even if a user bypasses reflections.
 
+### 4.5 Reset Pending Reviews
+A non-destructive "Start Fresh" action allows users to cancel all future pending reviews without affecting past data. When triggered via `POST /reviews/reset-pending`, the backend queries `ReviewSchedule` (joining on `Problem` for the authenticated `user_id`) where `status == "pending"`, and safely updates their status to `"cancelled"`. `Problem`, `Attempt`, `FailureReflection` tables, and terminal review statuses remain completely untouched.
+
 ---
 
 ## 5. Security Context (from Backend Review)

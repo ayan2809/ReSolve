@@ -485,3 +485,135 @@ def get_analytics_summary(
         "overconfidence_rate": confidence_data.get("high_confidence_percentage", 0),
         "has_data": total_failures > 0
     }
+
+
+# ============================================================================
+# AI FAILURE INSIGHTS
+# These analytics are derived ONLY from Gemini-generated insights stored in
+# FailureReflection.ai_* fields. They are a LAYER ON TOP of existing analytics,
+# NOT a replacement. Core analytics continue to derive from ReviewSchedule.status.
+# ============================================================================
+
+from pydantic import BaseModel
+from models import FailureReflection
+
+
+class FailureTypeCount(BaseModel):
+    """Count of failures by AI-classified type."""
+    failure_type: str
+    count: int
+
+
+class RecommendedActionCount(BaseModel):
+    """Count of recommended actions from Gemini."""
+    action: str
+    count: int
+
+
+class IntervalFailureType(BaseModel):
+    """Breakdown of failure types per interval."""
+    interval: str
+    failure_type: str
+    count: int
+
+
+class AIFailureInsightsResponse(BaseModel):
+    """
+    Response schema for AI-derived failure insights.
+    
+    All data comes from FailureReflection.ai_* fields only.
+    Rows where ai_failure_type is NULL are excluded (Gemini failures).
+    """
+    failure_type_distribution: List[FailureTypeCount]
+    confidence_mismatch_rate: float
+    top_recommended_actions: List[RecommendedActionCount]
+    failure_by_interval: List[IntervalFailureType]
+    total_analyzed: int
+
+
+@router.get("/failure-insights", response_model=AIFailureInsightsResponse)
+def get_ai_failure_insights(
+    session: Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id)
+) -> AIFailureInsightsResponse:
+    """
+    Returns AI-generated failure insights.
+    
+    IMPORTANT DESIGN NOTE:
+    - This endpoint uses ONLY FailureReflection.ai_* fields
+    - It does NOT infer or reclassify failures
+    - Rows where ai_failure_type is NULL are ignored (Gemini failed cases)
+    - This is a LAYER ON TOP of existing analytics, not a replacement
+    
+    Existing core analytics (failure counts, intervals, tags) continue
+    to derive from ReviewSchedule.status as the source of truth.
+    """
+    # Query all reflections with AI insights for this user
+    reflections = session.exec(
+        select(FailureReflection)
+        .where(FailureReflection.user_id == user_id)
+        .where(FailureReflection.ai_failure_type.isnot(None))  # Only rows with AI analysis
+    ).all()
+    
+    if not reflections:
+        return AIFailureInsightsResponse(
+            failure_type_distribution=[],
+            confidence_mismatch_rate=0.0,
+            top_recommended_actions=[],
+            failure_by_interval=[],
+            total_analyzed=0
+        )
+    
+    total = len(reflections)
+    
+    # 1. Failure type distribution
+    type_counts = defaultdict(int)
+    for r in reflections:
+        if r.ai_failure_type:
+            # Convert snake_case to readable format
+            readable_type = r.ai_failure_type.replace("_", " ").title()
+            type_counts[readable_type] += 1
+    
+    failure_type_distribution = [
+        FailureTypeCount(failure_type=ft, count=count)
+        for ft, count in sorted(type_counts.items(), key=lambda x: -x[1])
+    ]
+    
+    # 2. Confidence mismatch rate
+    mismatch_count = sum(1 for r in reflections if r.ai_confidence_mismatch)
+    confidence_mismatch_rate = round(mismatch_count / total, 2) if total > 0 else 0.0
+    
+    # 3. Top recommended actions (aggregate from all reflections)
+    action_counts = defaultdict(int)
+    for r in reflections:
+        if r.ai_recommended_actions:
+            for action in r.ai_recommended_actions:
+                action_counts[action] += 1
+    
+    top_recommended_actions = [
+        RecommendedActionCount(action=action, count=count)
+        for action, count in sorted(action_counts.items(), key=lambda x: -x[1])[:5]  # Top 5
+    ]
+    
+    # 4. Failure by interval (cross-tabulation of interval × failure_type)
+    interval_type_counts = defaultdict(lambda: defaultdict(int))
+    for r in reflections:
+        if r.ai_failure_type and r.interval_label:
+            readable_type = r.ai_failure_type.replace("_", " ").title()
+            interval_type_counts[r.interval_label][readable_type] += 1
+    
+    failure_by_interval = []
+    for interval in ["1d", "7d", "30d", "90d"]:
+        for ft, count in interval_type_counts.get(interval, {}).items():
+            failure_by_interval.append(
+                IntervalFailureType(interval=interval, failure_type=ft, count=count)
+            )
+    
+    return AIFailureInsightsResponse(
+        failure_type_distribution=failure_type_distribution,
+        confidence_mismatch_rate=confidence_mismatch_rate,
+        top_recommended_actions=top_recommended_actions,
+        failure_by_interval=failure_by_interval,
+        total_analyzed=total
+    )
+

@@ -149,6 +149,15 @@ class FailureReflection(SQLModel, table=True):
     
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
+    # AI-generated insights (nullable - populated by Gemini intelligence service)
+    # These fields are NEVER edited directly by users, only by the AI service
+    ai_failure_type: Optional[str] = None  # From FailureType enum values
+    ai_confidence_mismatch: Optional[bool] = None  # True if confidence didn't match performance
+    ai_primary_reason: Optional[str] = None  # Main cause of failure
+    ai_secondary_factors: List[str] = Field(default=[], sa_type=JSON)  # Contributing factors
+    ai_recommended_actions: List[str] = Field(default=[], sa_type=JSON)  # Actionable next steps
+    ai_analyzed_at: Optional[datetime] = None  # When AI analysis was performed
+    
     # Relationships
     problem: Problem = Relationship(back_populates="reflections")
     review_schedule: ReviewSchedule = Relationship(back_populates="reflection")

@@ -19,6 +19,8 @@ class AttemptCreate(BaseModel):
     approach_summary: str
     mistakes_notes: Optional[str] = None
     confidence_score: int
+    # Required when solved=False - user's reflection on why they failed
+    reflection_text: Optional[str] = None
 
 class AttemptRead(AttemptCreate):
     id: int

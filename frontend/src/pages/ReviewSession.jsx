@@ -14,6 +14,7 @@ export default function ReviewSession() {
     const [timeTaken, setTimeTaken] = useState('');
     const [approach, setApproach] = useState('');
     const [confidence, setConfidence] = useState(3);
+    const [reflectionText, setReflectionText] = useState('');
 
     useEffect(() => {
         fetchReviews();
@@ -36,6 +37,7 @@ export default function ReviewSession() {
         setTimeTaken('');
         setApproach('');
         setConfidence(3);
+        setReflectionText('');
     };
 
     const handleSubmit = async (e) => {
@@ -48,7 +50,9 @@ export default function ReviewSession() {
                 solved,
                 time_taken_minutes: parseInt(timeTaken),
                 approach_summary: approach,
-                confidence_score: confidence
+                confidence_score: confidence,
+                // Required for failed reviews - enables AI analysis
+                ...((!solved) && { reflection_text: reflectionText })
             });
 
             setReviews(prev => prev.filter(r => r.id !== currentReview.id));
@@ -202,6 +206,26 @@ export default function ReviewSession() {
                             placeholder="Briefly describe your approach..."
                         />
                     </div>
+
+                    {/* Reflection - shown only for failed reviews */}
+                    {!solved && (
+                        <div className="border border-rose-500/30 rounded-xl p-4 bg-rose-500/5">
+                            <label className="block text-sm font-medium mb-2 text-rose-400">
+                                Why did you fail? (AI will analyze this)
+                            </label>
+                            <textarea
+                                required
+                                value={reflectionText}
+                                onChange={e => setReflectionText(e.target.value)}
+                                rows={3}
+                                className="input-modern resize-none"
+                                placeholder="What went wrong? What concept did you struggle with?"
+                            />
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Your reflection helps AI generate personalized insights.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Submit */}
                     <button
